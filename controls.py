@@ -2,9 +2,7 @@ import directions
 import drivetrain_controls
 import arm_controls
 
-import sys
-sys.path.insert(1, '/object_detection/python/examples')
-import detectnet-camera
+from object_detection.python.examples import detection_camera
 
 print ("imports complete")
 
