@@ -1,3 +1,9 @@
+"""
+14 away, 9 vertical
+12 away, 8 vertical
+10 away, 7 vertical
+8 away, 6 vertical
+"""
 class ArmControls:
 	
 	#######################

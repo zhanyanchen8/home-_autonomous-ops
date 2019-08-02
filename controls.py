@@ -1,7 +1,6 @@
 import directions
 import drivetrain_controls
 import arm_controls
-
 from jetson-inference.python.examples import detection_camera
 
 print ("imports complete")
