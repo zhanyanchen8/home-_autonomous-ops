@@ -1,11 +1,20 @@
 import directions
 import drivetrain_controls
 import arm_controls
+import wheelPair
+import drivetrain_controls
+import turntable
+import communications
+
 from jetson-inference.python.examples import detection_camera
 
 print ("imports complete")
 
 objectPickedUp = False
+
+# HERE - set up communication with Arduino DUE
+
+# HERE - use list of motors to begin instantiating objects (wheelPairs, turntable, arm, etc.)
 
 while (not objectPickedUp):
 	toMove = detection_camera.main()
@@ -24,7 +33,7 @@ while (not objectPickedUp):
 			horizontalDirection = "RIGHT"
 		
 		rotate = None
-		# fill in the blank of rotate here
+		#HERE - fill in the blank of rotate here
 		
 		pixelsHorizontal = abs(toMove[0])
 		

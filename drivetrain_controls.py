@@ -26,12 +26,13 @@ class DriveTrainControls:
 	
 	# USE MOTOR SPECS TO DETERMINE ANGLES OF ROTATION
 	
+	"""
 	def rotateToLocation (direction):
 		
 		# direct drivetrain to rotate in certain direction
 		if (direction.rotate == "LEFT"):
 			turntable.turnLeft(direction)
 		elif (direction.rotate == "RIGHT"):
-			turntable.turnRight(direction);
-		
+			turntable.turnRight(direction)
+	"""
 		
