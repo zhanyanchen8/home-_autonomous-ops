@@ -23,7 +23,7 @@ class Directions:
 	#function to calculate number of inches to travel in given num Pixels in desired direction (x/y) 
 	#BEWARE OF DATA LOSS
 	def getDistance(px):
-		distanceAway = 5 # get distance sensor data from camera, convert to inches as necessary
+		distanceAway = # get distance sensor data from camera, convert to inches as necessary
 		pixelsPerInch = ((float)(640))/distanceAway
 		distanceToMove = px/pixelsPerInch
 		

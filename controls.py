@@ -19,7 +19,7 @@ def calculateRotationAngle(distInches, turntable):
 	return (float)(distInches)/(turntable.tableRadius) * 360
 
 def getDistance(px):
-		distanceAway = 5 # get distance sensor data from camera, convert to inches as necessary
+		distanceAway = # get distance sensor data from camera, convert to inches as necessary
 		pixelsPerInch = ((float)(640))/distanceAway
 		distanceToMove = px/pixelsPerInch
 		
@@ -34,9 +34,9 @@ def main():
 	# HERE - use list of motors to begin instantiating objects (wheelPairs, turntable, arm, etc.)
 
 	while (not objectPickedUp):
-		#toMove = detection_camera.main()
+		toMove = detection_camera.main()
 		
-		toMove = (100, -52)
+		#toMove = (100, -52)
 		
 		if (toMove == None):
 			print ("error - check detection_camera.py program")
