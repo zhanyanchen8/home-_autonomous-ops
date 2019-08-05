@@ -6,11 +6,11 @@ import drivetrain_controls
 import turntable
 import communications
 
-from jetson-inference.python.examples import detection_camera
+#from jetson-inference.python.examples import detection_camera
 
 print ("imports complete")
 
-objectPickedUp = False
+global objectPickedUp
 
 def grabObject():
 	return objectPickedUp
@@ -18,16 +18,25 @@ def grabObject():
 def calculateRotationAngle(distInches, turntable):
 	return (float)(distInches)/(turntable.tableRadius) * 360
 
+def getDistance(px):
+		distanceAway = 5 # get distance sensor data from camera, convert to inches as necessary
+		pixelsPerInch = ((float)(640))/distanceAway
+		distanceToMove = px/pixelsPerInch
+		
+		return distanceToMove
+		
 def main():
+	
+	objectPickedUp = False
 	
 	# HERE - set up communication with Arduino DUE
 
 	# HERE - use list of motors to begin instantiating objects (wheelPairs, turntable, arm, etc.)
 
 	while (not objectPickedUp):
-		toMove = detection_camera.main()
+		#toMove = detection_camera.main()
 		
-		#toMove = (100, -52)
+		toMove = (100, -52)
 		
 		if (toMove == None):
 			print ("error - check detection_camera.py program")
@@ -46,7 +55,8 @@ def main():
 				rotateDirection = "RIGHT"
 			
 			pixelsHorizontal = abs(toMove[0])
-			rotateAmt = calculateRotationAngle(directions.getDistance(pixelsHorizontal)) # fill in the blank here for calculations of degrees to rotate
+			rotateAmt = calculateRotationAngle(getDistance(pixelsHorizontal)) # fill in the blank here for calculations of degrees to rotate
+			#error in line above calling method in different class
 			
 			direction1 = directions(horizontalDirection, rotate, pixelsHorizontal, rotateAmt)
 			
