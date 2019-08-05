@@ -14,6 +14,8 @@ class DriveTrainControls:
 	
 	def driveToLocation (direction):
 		
+		print ("in driveToLocation, driving " + direction.direct + ".")
+		
 		# direct drivetrain to the left
 		if (direction.direct == "LEFT"):
 			wheelPairA.driveLeft(direction)
@@ -26,7 +28,7 @@ class DriveTrainControls:
 	
 	# USE MOTOR SPECS TO DETERMINE ANGLES OF ROTATION
 	
-	"""
+	
 	def rotateToLocation (direction):
 		
 		# direct drivetrain to rotate in certain direction
@@ -34,5 +36,5 @@ class DriveTrainControls:
 			turntable.turnLeft(direction)
 		elif (direction.rotate == "RIGHT"):
 			turntable.turnRight(direction)
-	"""
+	
 		

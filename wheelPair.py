@@ -22,6 +22,8 @@ class wheelPair:
 	def driveLeft(direction):
 		cnt = -1 * getCnt(direction)
 		
+		print ("driving left, cnt = " + str(cnt) + ".")
+		
 		#right here - send data to the arduino to execute the action
 		# to id1 and id2 wheel identification
 		
@@ -29,6 +31,7 @@ class wheelPair:
 	def driveRight(direction):
 		cnt = getCnt(direction)
 		
+		print ("driving right, cnt = " + str(cnt) + ".")
 		#right here - send data to the arduino to execute the action
 		# to id1 and id2 wheel identification
 	
