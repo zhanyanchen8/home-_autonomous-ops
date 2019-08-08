@@ -17,7 +17,7 @@ def computeChecksum(data):
         if sum > 0xffff:
             sum -= 0xffff
 
-return sum
+    return sum
 
 
 # Decodes data or returns None
@@ -85,21 +85,21 @@ def encode(source, destination, id, data):
         2, # T{length1} transaction id
         len(id), # transaction id
         5, # P{length4}
-		    len(data), # data
-		    4, # K{length}{data} checksum
-		    3 # G01 end
-        ])
+		len(data), # data
+		4, # K{length}{data} checksum
+		3 # G01 end
+    ])
     body = struct.pack("< 3s c B {}s c B {}s c B {}s c I {}s".format(
             len(source),
             len(destination),
             len(id),
             len(data)
         ),
-		bytes("G00").encode("ascii"),
-            b'S', len(source), source,
-            b'D', len(destination), destination,
-            b'T', len(id), id,
-            b'P', len(data), data
+		bytes(("G00").encode("ascii")),
+        b'S', len(source), source,
+        b'D', len(destination), destination,
+        b'T', len(id), id,
+        b'P', len(data), data
     )
     checksum = struct.pack("> H", computeChecksum(body))
     encoded = struct.pack("< {}s c B {}s 3s".format(
@@ -107,8 +107,8 @@ def encode(source, destination, id, data):
             len(checksum)
         ),
         body,
-        bytes('K').encode("ascii"), 2, checksum,
-        bytes("G01").encode("ascii")
+        bytes(('K').encode("ascii")), 2, checksum,
+        bytes(("G01").encode("ascii"))
     )
     
     return encoded
