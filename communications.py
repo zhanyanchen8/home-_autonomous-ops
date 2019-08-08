@@ -20,8 +20,9 @@ def toArduino(destination, data):
 		num = r2p.encode(source, destination[i], ID, data[i])
 		ser.write(num)
 		
+		confirmation = ser.read()
 		# confirmation that command has been sent and run - CONFIRMATION CONSTANT = 1
-		if (ser.read() != 1):
+		if (confirmation != 1):
 			print ("system error")
 			return 0
 		
