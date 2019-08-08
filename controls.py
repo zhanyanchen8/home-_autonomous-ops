@@ -19,12 +19,12 @@ def calculateRotationAngle(distInches, turntable):
 	return (float)(distInches)/(turntable.tableRadius) * 360
 
 def getDistance(px):
-		distanceAway = # get distance sensor data from camera, convert to inches as necessary
-		pixelsPerInch = ((float)(640))/distanceAway
-		distanceToMove = px/pixelsPerInch
+	distanceAway = # get distance sensor data from camera, convert to inches as necessary
+	pixelsPerInch = ((float)(640))/distanceAway
+	distanceToMove = px/pixelsPerInch
 		
-		return distanceToMove
-		
+	return distanceToMove
+				
 def main():
 	
 	objectPickedUp = False
