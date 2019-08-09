@@ -99,7 +99,7 @@ def encode(source, destination, id, data):
         b'S', len(source), source,
         b'D', len(destination), destination,
         b'T', len(id), id,
-        b'P', len(data), data
+        b'P', len(data), data # i am confusion
     )
     checksum = struct.pack("> H", computeChecksum(body))
     encoded = struct.pack("< {}s c B {}s 3s".format(
