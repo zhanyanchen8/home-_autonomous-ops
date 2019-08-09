@@ -106,6 +106,7 @@ def encode(source, destination, id, data):
 	        len(body),
             len(checksum)
         ),
+        
         body,
         bytes(('K').encode("ascii")), 2, checksum,
         bytes(("G01").encode("ascii"))

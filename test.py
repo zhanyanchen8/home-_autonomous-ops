@@ -1,3 +1,5 @@
-import R2Protocol as r2p
+# import R2Protocol as r2p
+import communications as c
 
-print (r2p.encode("JETSON", "MOTOR1", "37", "82"))
+p = c.toArduino("MOTOR1", "82")
+print(p)
