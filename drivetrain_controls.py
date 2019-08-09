@@ -10,6 +10,7 @@ class DriveTrainControls:
 	# ASSUMMPTIONS:
 	#	obstacles are not considered in this algorithm iteration
 	#	turntable not a factor at the moment
+	#
 	#######################
 	
 	def driveToLocation (direction):
@@ -36,5 +37,3 @@ class DriveTrainControls:
 			turntable.turnLeft(direction)
 		elif (direction.rotate == "RIGHT"):
 			turntable.turnRight(direction)
-	
-		
