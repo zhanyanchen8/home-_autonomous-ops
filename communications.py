@@ -13,7 +13,7 @@ def toArduino(destination, data):
 	cnt = 0
 
 	source = "JETSON"
-	ID = ""
+	ID = "12"
 	
 	# keep track to see if destination ID is to motor controlling drivetrain or turntables
 	"""
