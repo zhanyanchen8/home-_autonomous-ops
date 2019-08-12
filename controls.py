@@ -4,7 +4,7 @@ import arm_controls
 import wheelPair
 import drivetrain_controls
 import turntable
-import communications
+# import communications
 
 #from jetson-inference.python.examples import detection_camera
 
@@ -28,8 +28,6 @@ def getDistance(px):
 def main():
 	
 	objectPickedUp = False
-	
-	# HERE - set up communication with Arduino DUE
 
 	# HERE - use list of motors to begin instantiating objects (wheelPairs, turntable, arm, etc.)
 
