@@ -12,7 +12,8 @@ print ("imports complete")
 global objectPickedUp
 
 # HERE - use list of motors to begin instantiating objects (wheelPairs, turntable, arm, etc.)
-
+wp1 = wheelPair(1, 3, 2)
+wp2 = wheelPair(2, 4, 2)
 
 
 def grabObject():
