@@ -2,15 +2,18 @@ import directions
 import drivetrain_controls
 import arm_controls
 import wheelPair
-import drivetrain_controls
 import turntable
 # import communications
 
-#from jetson-inference.python.examples import detection_camera
+# from jetson-inference.python.examples import detection_camera
 
 print ("imports complete")
 
 global objectPickedUp
+
+# HERE - use list of motors to begin instantiating objects (wheelPairs, turntable, arm, etc.)
+
+
 
 def grabObject():
 	return objectPickedUp
@@ -28,8 +31,6 @@ def getDistance(px):
 def main():
 	
 	objectPickedUp = False
-
-	# HERE - use list of motors to begin instantiating objects (wheelPairs, turntable, arm, etc.)
 
 	while (not objectPickedUp):
 		toMove = detection_camera.main()

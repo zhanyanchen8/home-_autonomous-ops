@@ -1,3 +1,5 @@
+import communications
+
 class Turntable:
 	
 	#######################

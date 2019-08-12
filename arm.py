@@ -1,3 +1,5 @@
+import communications
+
 class Arm:
 	
 	#######################
@@ -25,6 +27,7 @@ class Arm:
 	
 	def reposition():
 		
-	
-
-	
+		
+	def adjustAngle():
+		
+		
