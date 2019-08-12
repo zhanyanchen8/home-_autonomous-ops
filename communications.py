@@ -29,12 +29,12 @@ def toArduino(destination, data):
 	"""
 	
 	num = r2p.encode(source, destination, ID, data)
-	print (num)
+	print ("Encoded: " + num)
 	ser.write(num)
 		
 	confirmation = ser.read()
 	
-	print (confirmation)
+	print ("Read In: " + confirmation)
 	
 	"""
 	# confirmation that command has been sent and run - CONFIRMATION CONSTANT = 1
@@ -64,4 +64,4 @@ def test():
 		input_number = ord(inputIn)
 		print ("Read input back: " + str(input_number))
 
-test()
+# test()
