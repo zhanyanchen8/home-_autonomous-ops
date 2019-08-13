@@ -13,7 +13,7 @@ class DriveTrainControls:
 	#
 	#######################
 	
-	def driveToLocation (direction):
+	def driveToLocation (wheelPairA, wheelPairB, direction):
 		
 		print ("in driveToLocation, driving " + direction.direct + ".")
 		
@@ -30,7 +30,7 @@ class DriveTrainControls:
 	# USE MOTOR SPECS TO DETERMINE ANGLES OF ROTATION
 	
 	
-	def rotateToLocation (direction):
+	def rotateToLocation (turntable, direction):
 		
 		# direct drivetrain to rotate in certain direction
 		if (direction.rotate == "LEFT"):

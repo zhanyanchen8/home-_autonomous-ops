@@ -59,9 +59,9 @@ def main():
 			rotateAmt = calculateRotationAngle(getDistance(pixelsHorizontal)) # fill in the blank here for calculations of degrees to rotate
 			#error in line above calling method in different class
 			
-			direction1 = directions(horizontalDirection, rotate, pixelsHorizontal, rotateAmt)
+			direction1 = directions.directions(horizontalDirection, rotate, pixelsHorizontal, rotateAmt)
 			
-			drivetrain_controls.driveToLocation(direction1)
+			drivetrain_controls.driveToLocation(wp1, wp2, direction1)
 			
 			"""
 			# integrate movements together through concurrency
