@@ -11,7 +11,7 @@ class ArmControls:
 	# tell arm to reposition itself so the claw is parallel to ground
 	# WHILE still maintaining its horizontal center
 	def levelClaw():
-		angle = # get claw angle from gyroscope (in degrees) - CHECK SPECS
+		angle = 15 # get claw angle from gyroscope (in degrees) - CHECK SPECS
 		
 		while (angle >= -2 and angle <= 2): # in degrees
 			arm.adjustAngle(angle)

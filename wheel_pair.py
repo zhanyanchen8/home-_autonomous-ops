@@ -2,7 +2,7 @@ import math
 import directions
 import communications
 
-class wheelPair:
+class wheel_pair:
 	
 	#######################
 	#
@@ -14,10 +14,10 @@ class wheelPair:
 	#######################
 	
 	def __init__(identification1, identification2, radius):
-		self.id1 = identification1
-		self.id2 = identification2
-		self.wheelRadius = radius
-		self.circumference = 2 * radius * math.pi
+		id1 = identification1
+		id2 = identification2
+		wheelRadius = radius
+		circumference = 2 * radius * math.pi
 		
 		
 	def driveLeft(direction):

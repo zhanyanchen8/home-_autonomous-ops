@@ -1,20 +1,21 @@
 import directions
 import drivetrain_controls
 import arm_controls
-import wheelPair
+import wheel_pair
 import turntable
 # import communications
 
-# from jetson-inference.python.examples import detection_camera
+import sys
+sys.path.append("/home/arl/Documents/homeplus_autonomous-ops/jetson/python/examples")
+import detection_camera
 
 print ("imports complete")
 
 global objectPickedUp
 
 # HERE - use list of motors to begin instantiating objects (wheelPairs, turntable, arm, etc.)
-wp1 = wheelPair(1, 3, 2)
-wp2 = wheelPair(2, 4, 2)
-
+wp1 = wheel_pair.wheel_pair(1, 3)
+wp2 = wheel_pair.wheel_pair(2, 4)
 
 def grabObject():
 	return objectPickedUp
@@ -23,7 +24,7 @@ def calculateRotationAngle(distInches, turntable):
 	return (float)(distInches)/(turntable.tableRadius) * 360
 
 def getDistance(px):
-	distanceAway = # get distance sensor data from camera, convert to inches as necessary
+	distanceAway = 5 # get distance sensor data from camera, convert to inches as necessary
 	pixelsPerInch = ((float)(640))/distanceAway
 	distanceToMove = px/pixelsPerInch
 		
