@@ -12,10 +12,11 @@ import detection_camera
 print ("imports complete")
 
 global objectPickedUp
+objectPickedUp = False
 
 # HERE - use list of motors to begin instantiating objects (wheelPairs, turntable, arm, etc.)
-wp1 = wheel_pair.wheel_pair(1, 3)
-wp2 = wheel_pair.wheel_pair(2, 4)
+wp1 = wheel_pair.wheel_pair(1, 3, 2)
+wp2 = wheel_pair.wheel_pair(2, 4, 2)
 
 def grabObject():
 	return objectPickedUp
@@ -56,10 +57,11 @@ def main():
 				rotateDirection = "RIGHT"
 			
 			pixelsHorizontal = abs(toMove[0])
-			rotateAmt = calculateRotationAngle(getDistance(pixelsHorizontal)) # fill in the blank here for calculations of degrees to rotate
+			#rotateAmt = calculateRotationAngle(getDistance(pixelsHorizontal)) # fill in the blank here for calculations of degrees to rotate
 			#error in line above calling method in different class
 			
-			direction1 = directions.directions(horizontalDirection, rotate, pixelsHorizontal, rotateAmt)
+			rotateAmt = 0
+			direction1 = directions.Directions(horizontalDirection, rotateDirection, pixelsHorizontal, rotateAmt)
 			
 			drivetrain_controls.driveToLocation(wp1, wp2, direction1)
 			
