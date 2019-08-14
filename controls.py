@@ -9,6 +9,8 @@ import sys
 sys.path.append("/home/arl/Documents/homeplus_autonomous-ops/jetson/python/examples")
 import detection_camera
 
+import thread
+
 print ("imports complete")
 
 global objectPickedUp
