@@ -25,6 +25,8 @@ class wheel_pair:
 		
 		print ("driving left, cnt = " + str(cnt) + ".")
 		
+		communications.toArduino("M1", str(cnt))
+		communications.toArduino("M3", str(cnt))
 		#right here - send data to the arduino to execute the action
 		# to id1 and id2 wheel identification
 		
@@ -33,6 +35,9 @@ class wheel_pair:
 		cnt = self.getCnt(direction)
 		
 		print ("driving right, cnt = " + str(cnt) + ".")
+		
+		communications.toArduino("M2", str(cnt))
+		communications.toArduino("M4", str(cnt))
 		#right here - send data to the arduino to execute the action
 		# to id1 and id2 wheel identification
 	

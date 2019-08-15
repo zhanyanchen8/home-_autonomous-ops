@@ -43,8 +43,10 @@ def main():
 		if (toMove == None):
 			print ("error - check detection_camera.py program")
 			break
-			
+		
 		else:
+		
+			print ("toMove data exists!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!")
 			
 			# horizontal movement using the drivetrain
 			horizontalDirection = ""
@@ -62,8 +64,10 @@ def main():
 			
 			rotateAmt = 0
 			direction1 = directions.Directions(horizontalDirection, rotateDirection, pixelsHorizontal, rotateAmt)
+			print ("directions created")
 			
 			drivetrain_controls.driveToLocation(wp1, wp2, direction1)
+			print ("drivetrain control done")
 			
 			"""
 			# integrate movements together through concurrency
