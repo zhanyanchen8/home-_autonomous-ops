@@ -40,12 +40,14 @@ def getDistance(px):
 def main():
 
 	objectPickedUp = False
-	detection_camera.main()
+	detection_camera.main() #stuck in here
 	
 	while (not objectPickedUp):
 		detection = detection_camera.getDetection()
 		if (detection.ClassID == 44 and detection.Confidence > 0.6):
 			toMove = detection_camera.getDirections()
+		
+		print ("DATA EXTRACTED")
 		
 		if (toMove == None):
 			print ("error - check detection_camera.py program")
@@ -71,6 +73,8 @@ def main():
 			direction1 = directions.Directions(horizontalDirection, rotateDirection, pixelsHorizontal, rotateAmt)
 			
 			drivetrain_controls.driveToLocation(wp1, wp2, direction1)
+			
+			print ("DRIVEN")
 			
 			"""
 			# integrate movements together through concurrency
