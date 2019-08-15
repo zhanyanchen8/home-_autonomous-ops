@@ -9,17 +9,12 @@ import sys
 sys.path.append("/home/arl/Documents/homeplus_autonomous-ops/jetson/python/examples")
 import detection_camera
 
-<<<<<<< HEAD
 """
 from threading import Lock, Thread
 import threading
 t1 = threading.Thread(target = detection_camera.main, args=(0,))
 lock = Lock()
 """
-=======
-import thread
-
->>>>>>> 711efcb69a0f25f9dbaa888ccfb738d39c51eadb
 print ("imports complete")
 
 global objectPickedUp
