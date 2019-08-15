@@ -9,6 +9,12 @@ import sys
 sys.path.append("/home/arl/Documents/homeplus_autonomous-ops/jetson/python/examples")
 import detection_camera
 
+"""
+from threading import Lock, Thread
+import threading
+t1 = threading.Thread(target = detection_camera.main, args=(0,))
+lock = Lock()
+"""
 print ("imports complete")
 
 global objectPickedUp
@@ -32,13 +38,14 @@ def getDistance(px):
 	return distanceToMove
 				
 def main():
-	
-	objectPickedUp = False
 
+	objectPickedUp = False
+	detection_camera.main()
+	
 	while (not objectPickedUp):
-		toMove = detection_camera.main()
-		
-		#toMove = (100, -52)
+		detection = detection_camera.getDetection()
+		if (detection.ClassID == 44 and detection.Confidence > 0.6):
+			toMove = detection_camera.getDirections()
 		
 		if (toMove == None):
 			print ("error - check detection_camera.py program")
