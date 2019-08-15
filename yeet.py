@@ -24,23 +24,14 @@
 
 import jetson.inference
 import jetson.utils
-import argparse
 
-global toMove
-toMove = None
-global detection
+import argparse
 
 def calcMvt (detection, screen_center):
 	move_x = detection.Center[0] - screen_center[0]
 	move_y = detection.Center[1] - screen_center[1]
 	
 	return (move_x, move_y)
-
-def getDetection ():
-	return detection
-
-def getDirections ():
-	return toMove
 
 def main():
 	# parse the command line
@@ -54,7 +45,7 @@ def main():
 	parser.add_argument("--height", type=int, default=480, help="desired height of camera stream (default is 480 pixels)")
 
 	opt, argv = parser.parse_known_args()
-	
+
 	# load the object detection network
 	net = jetson.inference.detectNet(opt.network, argv, opt.threshold)
 
@@ -83,6 +74,9 @@ def main():
 			toMove = calcMvt (detection, screen_center)
 			
 			print((str)(toMove[0]) + " " + (str)(toMove[1]))
+			
+			if (detection.ClassID == 44 and detection.Confidence > 0.6):
+				return toMove
 
 		# render the image
 		display.RenderOnce(img, width, height)
@@ -96,5 +90,7 @@ def main():
 
 		# print out performance info
 		net.PrintProfilerTimes()
+		
+	return None
 
 # main()
