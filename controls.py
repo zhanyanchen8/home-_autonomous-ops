@@ -9,12 +9,11 @@ import sys
 sys.path.append("/home/arl/Documents/homeplus_autonomous-ops/jetson/python/examples")
 import detection_camera
 
-"""
 from threading import Lock, Thread
 import threading
 t1 = threading.Thread(target = detection_camera.main, args=(0,))
-lock = Lock()
-"""
+# lock = Lock()
+
 print ("imports complete")
 
 global objectPickedUp
@@ -40,7 +39,9 @@ def getDistance(px):
 def main():
 
 	objectPickedUp = False
-	detection_camera.main() #stuck in here
+	
+	t1.start()
+	# detection_camera.main() #stuck in here
 	
 	while (not objectPickedUp):
 		detection = detection_camera.getDetection()
