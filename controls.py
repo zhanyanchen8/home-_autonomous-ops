@@ -9,11 +9,6 @@ import sys
 sys.path.append("/home/arl/Documents/homeplus_autonomous-ops/jetson/python/examples")
 import detection_camera
 
-from threading import Lock, Thread
-import threading
-t1 = threading.Thread(target = detection_camera.main, args=(0,))
-# lock = Lock()
-
 print ("imports complete")
 
 global objectPickedUp
@@ -37,18 +32,13 @@ def getDistance(px):
 	return distanceToMove
 				
 def main():
-
+	
 	objectPickedUp = False
-	
-	t1.start()
-	# detection_camera.main() #stuck in here
-	
+
 	while (not objectPickedUp):
-		detection = detection_camera.getDetection()
-		if (detection.ClassID == 44 and detection.Confidence > 0.6):
-			toMove = detection_camera.getDirections()
+		toMove = detection_camera.main()
 		
-		print ("DATA EXTRACTED")
+		#toMove = (100, -52)
 		
 		if (toMove == None):
 			print ("error - check detection_camera.py program")
@@ -74,8 +64,6 @@ def main():
 			direction1 = directions.Directions(horizontalDirection, rotateDirection, pixelsHorizontal, rotateAmt)
 			
 			drivetrain_controls.driveToLocation(wp1, wp2, direction1)
-			
-			print ("DRIVEN")
 			
 			"""
 			# integrate movements together through concurrency
