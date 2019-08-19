@@ -27,12 +27,24 @@ import jetson.utils
 import time
 import argparse
 
+
+import sys
+sys.path.append("/home/arl/Documents/homeplus_autonomous-ops/")
+import controls
+
+
+from threading import Event
+import threading
+event = threading.Event()
+
 global toMove
 toMove = (0,0)
 
+"""
 global lockReleased
 lockReleased = False
 #lockReleased = True
+"""
 
 def calcMvt (detection, screen_center):
 	move_x = detection.Center[0] - screen_center[0]
@@ -40,7 +52,7 @@ def calcMvt (detection, screen_center):
 	
 	return (move_x, move_y)
 
-def main(lock):
+def main():
 	
 	print ("in detection_camera")
 	
@@ -75,25 +87,34 @@ def main(lock):
 		# print the detections
 		print("detected {:d} objects in image".format(len(detections)))
 		
-		print ("LOCK ABOUT TO BE ACQUIRED")
-		lock.acquire()
-		print ("LOCK ACQUIRED BY DETECTION_CAMERA")
-		lockReleased = False
+		# set event such that this event is the only one that can run
 		
-		for detection in detections:
-			print(detection)
-			print(net.GetClassDesc(detection.ClassID))
+		if (not controls.event.isSet()):
 			
-			print(detection.Center)
-			screen_center = (640/2, 480/2)
+			print ("EVENT ABOUT TO BE SET BY CAMERA")
+			event.set()
 			
-			if (detection.ClassID == 44 and detection.Confidence > 0.6):
-				toMove = calcMvt (detection, screen_center)			
-				print((str)(toMove[0]) + " " + (str)(toMove[1]))				
+			# lock.acquire()
+			#print ("LOCK ACQUIRED BY DETECTION_CAMERA")
+			# lockReleased = False
+			
+			for detection in detections:
+				print(detection)
+				print(net.GetClassDesc(detection.ClassID))
+				
+				print(detection.Center)
+				screen_center = (640/2, 480/2)
+				
+				if (detection.ClassID == 44 and detection.Confidence > 0.6):
+					toMove = calcMvt (detection, screen_center)			
+					print((str)(toMove[0]) + " " + (str)(toMove[1]))				
 
-		lock.release()
-		lockReleased = True
-		print("LOCK RELEASED")
+			# lock.release()
+			# lockReleased = True
+			# print("LOCK RELEASED")
+			
+			# prevent this event from running
+			event.clear()
 		
 		# render the image
 		display.RenderOnce(img, width, height)
@@ -108,7 +129,6 @@ def main(lock):
 		# print out performance info
 		# net.PrintProfilerTimes()
 		
-		time.sleep(5)
 		
 	return None
 
