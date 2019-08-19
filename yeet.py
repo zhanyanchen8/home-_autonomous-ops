@@ -24,15 +24,8 @@
 
 import jetson.inference
 import jetson.utils
-import time
+
 import argparse
-
-global toMove
-toMove = (0,0)
-
-global lockReleased
-lockReleased = False
-#lockReleased = True
 
 def calcMvt (detection, screen_center):
 	move_x = detection.Center[0] - screen_center[0]
@@ -40,10 +33,7 @@ def calcMvt (detection, screen_center):
 	
 	return (move_x, move_y)
 
-def main(lock):
-	
-	print ("in detection_camera")
-	
+def main():
 	# parse the command line
 	parser = argparse.ArgumentParser(description="Locate objects in a live camera stream using an object detection DNN.", 
 							   formatter_class=argparse.RawTextHelpFormatter, epilog=jetson.inference.detectNet.Usage())
@@ -65,7 +55,6 @@ def main(lock):
 
 	# process frames until user exits
 	while display.IsOpen():
-		
 		# capture the image
 		img, width, height = camera.CaptureRGBA()
 
@@ -74,12 +63,7 @@ def main(lock):
 
 		# print the detections
 		print("detected {:d} objects in image".format(len(detections)))
-		
-		print ("LOCK ABOUT TO BE ACQUIRED")
-		lock.acquire()
-		print ("LOCK ACQUIRED BY DETECTION_CAMERA")
-		lockReleased = False
-		
+
 		for detection in detections:
 			print(detection)
 			print(net.GetClassDesc(detection.ClassID))
@@ -87,14 +71,13 @@ def main(lock):
 			print(detection.Center)
 			screen_center = (640/2, 480/2)
 			
+			toMove = calcMvt (detection, screen_center)
+			
+			print((str)(toMove[0]) + " " + (str)(toMove[1]))
+			
 			if (detection.ClassID == 44 and detection.Confidence > 0.6):
-				toMove = calcMvt (detection, screen_center)			
-				print((str)(toMove[0]) + " " + (str)(toMove[1]))				
+				return toMove
 
-		lock.release()
-		lockReleased = True
-		print("LOCK RELEASED")
-		
 		# render the image
 		display.RenderOnce(img, width, height)
 
@@ -106,9 +89,7 @@ def main(lock):
 			jetson.utils.cudaDeviceSynchronize()
 
 		# print out performance info
-		# net.PrintProfilerTimes()
-		
-		time.sleep(5)
+		net.PrintProfilerTimes()
 		
 	return None
 
