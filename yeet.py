@@ -135,7 +135,6 @@ def camera_detection():
 				
 				if (detection.ClassID == 44 and detection.Confidence > 0.6):
 					toMove = calcMvt (detection, screen_center)			
-					print((str)(toMove[0]) + " " + (str)(toMove[1]))
 			
 					# prevent this event  from running
 					cameraEvent.clear()
@@ -179,7 +178,6 @@ def main():
 		
 		print ("about to start thread")
 		#t1.start()
-		camera_detection()
 		
 		print ("\n\n\n\n\n\n\n SLEEPING")
 		# time.sleep(0.5)
@@ -190,8 +188,12 @@ def main():
 		print ("\n\nabout to enter loop\n")
 		print (controlsEvent.isSet())
 		
-		while (controlsEvent.isSet()):
+		cameraEvent.set()
+		while (cameraEvent.isSet()):
+			camera_detection()
 		
+		while (controlsEvent.isSet()):
+			
 			controlsEvent.set()
 			print ("EVENT NOW IN CONTROLS")
 			
