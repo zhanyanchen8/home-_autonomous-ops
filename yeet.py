@@ -30,6 +30,7 @@ import drivetrain_controls
 import arm_controls
 import wheel_pair
 import turntable
+import time
 
 """
 import sys
@@ -69,10 +70,14 @@ print ("imports complete")
 global objectPickedUp
 objectPickedUp = False
 
-event = threading.Event()
+cameraEvent = threading.Event()
+cameraEvent.clear()
+
+controlsEvent = threading.Event()
+controlsEvent.clear()
 
 global toMove
-toMove = None
+toMove = (0,0)
 
 # HERE - use list of motors to begin instantiating objects (wheelPairs, turntable, arm, etc.)
 wp1 = wheel_pair.wheel_pair(1, 3, 2)
@@ -82,73 +87,78 @@ wp2 = wheel_pair.wheel_pair(2, 4, 2)
 
 def camera_detection():
 	
-	print ("in detection_camera")
-	
-	# parse the command line
-	parser = argparse.ArgumentParser(description="Locate objects in a live camera stream using an object detection DNN.", 
-							   formatter_class=argparse.RawTextHelpFormatter, epilog=jetson.inference.detectNet.Usage())
-
-	parser.add_argument("--network", type=str, default="ssd-mobilenet-v1", help="pre-trained model to load, see below for options")
-	parser.add_argument("--threshold", type=float, default=0.5, help="minimum detection threshold to use")
-	parser.add_argument("--camera", type=str, default="/dev/video0", help="index of the MIPI CSI camera to use (NULL for CSI camera 0)\nor for VL42 cameras the /dev/video node to use.\nby default, MIPI CSI camera 0 will be used.")
-	parser.add_argument("--width", type=int, default=640, help="desired width of camera stream (default is 640 pixels)")
-	parser.add_argument("--height", type=int, default=480, help="desired height of camera stream (default is 480 pixels)")
-
-	opt, argv = parser.parse_known_args()
-
-	# load the object detection network
-	net = jetson.inference.detectNet(opt.network, argv, opt.threshold)
-
-	# create the camera and display
-	camera = jetson.utils.gstCamera(opt.width, opt.height, opt.camera)
-	display = jetson.utils.glDisplay()
-
-	# process frames until user exits
-	while display.IsOpen():
-		
-		# capture the image
-		img, width, height = camera.CaptureRGBA()
-
-		# detect objects in the image (with overlay)
-		detections = net.Detect(img, width, height)
-
-		# print the detections
-		print("detected {:d} objects in image".format(len(detections)))
-		
+	while (not controlsEvent.isSet()):
 		# set event such that this event is the only one that can run		
 		print ("EVENT ABOUT TO BE SET BY CAMERA")
-		event.set()
-		
-		for detection in detections:
-			print(detection)
-			print(net.GetClassDesc(detection.ClassID))
+		cameraEvent.set()
+		print ("EVENT SET BY CAMERA")
 			
-			print(detection.Center)
-			screen_center = (640/2, 480/2)
+		print ("in detection_camera")
+		
+		# parse the command line
+		parser = argparse.ArgumentParser(description="Locate objects in a live camera stream using an object detection DNN.", 
+								   formatter_class=argparse.RawTextHelpFormatter, epilog=jetson.inference.detectNet.Usage())
+
+		parser.add_argument("--network", type=str, default="ssd-mobilenet-v1", help="pre-trained model to load, see below for options")
+		parser.add_argument("--threshold", type=float, default=0.5, help="minimum detection threshold to use")
+		parser.add_argument("--camera", type=str, default="/dev/video0", help="index of the MIPI CSI camera to use (NULL for CSI camera 0)\nor for VL42 cameras the /dev/video node to use.\nby default, MIPI CSI camera 0 will be used.")
+		parser.add_argument("--width", type=int, default=640, help="desired width of camera stream (default is 640 pixels)")
+		parser.add_argument("--height", type=int, default=480, help="desired height of camera stream (default is 480 pixels)")
+
+		opt, argv = parser.parse_known_args()
+
+		# load the object detection network
+		net = jetson.inference.detectNet(opt.network, argv, opt.threshold)
+
+		# create the camera and display
+		camera = jetson.utils.gstCamera(opt.width, opt.height, opt.camera)
+		display = jetson.utils.glDisplay()
+
+		# process frames until user exits
+		while display.IsOpen() and not controlsEvent.isSet() and cameraEvent.isSet():
 			
-			if (detection.ClassID == 44 and detection.Confidence > 0.6):
-				toMove = calcMvt (detection, screen_center)			
-				print((str)(toMove[0]) + " " + (str)(toMove[1]))
-		
-		# prevent this event from running
-		event.clear()
-		
-		print ("EVENT CLEARED BY DETECTION_CAMERA")
-	
-		# render the image
-		display.RenderOnce(img, width, height)
+			# capture the image
+			img, width, height = camera.CaptureRGBA()
 
-		# update the title bar
-		display.SetTitle("{:s} | Network {:.0f} FPS".format(opt.network, 1000.0 / net.GetNetworkTime()))
+			# detect objects in the image (with overlay)
+			detections = net.Detect(img, width, height)
 
-		# synchronize with the GPU
-		if len(detections) > 0:
-			jetson.utils.cudaDeviceSynchronize()
+			# print the detections
+			print("detected {:d} objects in image".format(len(detections)))
+			
+			for detection in detections:
+				print(detection)
+				print(net.GetClassDesc(detection.ClassID))
+				
+				print(detection.Center)
+				screen_center = (640/2, 480/2)
+				
+				if (detection.ClassID == 44 and detection.Confidence > 0.6):
+					toMove = calcMvt (detection, screen_center)			
+					print((str)(toMove[0]) + " " + (str)(toMove[1]))
+			
+					# prevent this event  from running
+					cameraEvent.clear()
+					print (cameraEvent.isSet())
+					controlsEvent.set()
+					print ("EVENT CLEARED BY DETECTION_CAMERA")
+					
+					return
+					
+			# render the image
+			display.RenderOnce(img, width, height)
 
-		# print out performance info
-		# net.PrintProfilerTimes()
-		
-	return None
+			# update the title bar
+			display.SetTitle("{:s} | Network {:.0f} FPS".format(opt.network, 1000.0 / net.GetNetworkTime()))
+
+			# synchronize with the GPU
+			if len(detections) > 0:
+				jetson.utils.cudaDeviceSynchronize()
+
+			# print out performance info
+			# net.PrintProfilerTimes()
+
+t1 = threading.Thread(target=camera_detection, args=())
 
 def calculateRotationAngle(distInches, turntable):
 	return (float)(distInches)/(turntable.tableRadius) * 360
@@ -161,7 +171,6 @@ def getDistance(px):
 	return distanceToMove
 				
 def main():
-	t1 = threading.Thread(target=camera_detection, args=())
 	
 	objectPickedUp = False
 	
@@ -169,13 +178,24 @@ def main():
 		print ("in loop")
 		
 		print ("about to start thread")
-		t1.start()
+		#t1.start()
+		camera_detection()
 		
-		if (not event.isSet()):
-			event.set()
+		print ("\n\n\n\n\n\n\n SLEEPING")
+		# time.sleep(0.5)
+		
+		#while (cameraEvent.isSet()):
+		#	pass
+		
+		print ("\n\nabout to enter loop\n")
+		print (controlsEvent.isSet())
+		
+		while (controlsEvent.isSet()):
+		
+			controlsEvent.set()
 			print ("EVENT NOW IN CONTROLS")
 			
-			if (toMove == None):
+			if (toMove == None):                                                             
 				print ("error - check detection_camera.py program")
 				break
 			
@@ -224,10 +244,10 @@ def main():
 				
 				print ("------------------------------------------------ END OF CONTROLS LOOP ------------------------------------------------")
 			
-			event.clear()
+			controlsEvent.clear()
 			print ("EVENT CLOSED IN CONTROLS")
-			
-		t1.join()
+				
+		#t1.join()
 		break
 	
 	print ("END. fin")
