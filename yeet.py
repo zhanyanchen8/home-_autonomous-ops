@@ -24,21 +24,24 @@
 
 import jetson.inference
 import jetson.utils
-import time
 import argparse
+import directions
+import drivetrain_controls
+import arm_controls
+import wheel_pair
+import turntable
 
-
+"""
 import sys
 sys.path.append("/home/arl/Documents/homeplus_autonomous-ops/")
 import controls
+"""
 
-
+"""
 from threading import Event
 import threading
 event = threading.Event()
-
-global toMove
-toMove = (0,0)
+"""
 
 """
 global lockReleased
@@ -52,7 +55,32 @@ def calcMvt (detection, screen_center):
 	
 	return (move_x, move_y)
 
-def main():
+###################################################
+"""
+import sys
+sys.path.append("/home/arl/Documents/homeplus_autonomous-ops/jetson/python/examples")
+import detection_camera
+"""
+
+from threading import Thread, RLock, Event
+import threading
+print ("imports complete")
+
+global objectPickedUp
+objectPickedUp = False
+
+event = threading.Event()
+
+global toMove
+toMove = None
+
+# HERE - use list of motors to begin instantiating objects (wheelPairs, turntable, arm, etc.)
+wp1 = wheel_pair.wheel_pair(1, 3, 2)
+wp2 = wheel_pair.wheel_pair(2, 4, 2)
+###################################################
+
+
+def camera_detection():
 	
 	print ("in detection_camera")
 	
@@ -87,35 +115,26 @@ def main():
 		# print the detections
 		print("detected {:d} objects in image".format(len(detections)))
 		
-		# set event such that this event is the only one that can run
+		# set event such that this event is the only one that can run		
+		print ("EVENT ABOUT TO BE SET BY CAMERA")
+		event.set()
 		
-		if (not controls.event.isSet()):
+		for detection in detections:
+			print(detection)
+			print(net.GetClassDesc(detection.ClassID))
 			
-			print ("EVENT ABOUT TO BE SET BY CAMERA")
-			event.set()
+			print(detection.Center)
+			screen_center = (640/2, 480/2)
 			
-			# lock.acquire()
-			#print ("LOCK ACQUIRED BY DETECTION_CAMERA")
-			# lockReleased = False
-			
-			for detection in detections:
-				print(detection)
-				print(net.GetClassDesc(detection.ClassID))
-				
-				print(detection.Center)
-				screen_center = (640/2, 480/2)
-				
-				if (detection.ClassID == 44 and detection.Confidence > 0.6):
-					toMove = calcMvt (detection, screen_center)			
-					print((str)(toMove[0]) + " " + (str)(toMove[1]))				
-
-			# lock.release()
-			# lockReleased = True
-			# print("LOCK RELEASED")
-			
-			# prevent this event from running
-			event.clear()
+			if (detection.ClassID == 44 and detection.Confidence > 0.6):
+				toMove = calcMvt (detection, screen_center)			
+				print((str)(toMove[0]) + " " + (str)(toMove[1]))
 		
+		# prevent this event from running
+		event.clear()
+		
+		print ("EVENT CLEARED BY DETECTION_CAMERA")
+	
 		# render the image
 		display.RenderOnce(img, width, height)
 
@@ -129,7 +148,88 @@ def main():
 		# print out performance info
 		# net.PrintProfilerTimes()
 		
-		
 	return None
 
-# main()
+def calculateRotationAngle(distInches, turntable):
+	return (float)(distInches)/(turntable.tableRadius) * 360
+
+def getDistance(px):
+	distanceAway = 5 # get distance sensor data from camera, convert to inches as necessary
+	pixelsPerInch = ((float)(640))/distanceAway
+	distanceToMove = px/pixelsPerInch
+		
+	return distanceToMove
+				
+def main():
+	t1 = threading.Thread(target=camera_detection, args=())
+	
+	objectPickedUp = False
+	
+	while (not objectPickedUp):
+		print ("in loop")
+		
+		print ("about to start thread")
+		t1.start()
+		
+		if (not event.isSet()):
+			event.set()
+			print ("EVENT NOW IN CONTROLS")
+			
+			if (toMove == None):
+				print ("error - check detection_camera.py program")
+				break
+			
+			else: 
+				
+				print ("------------------------------------------------ ABOUT TO SET VARIABLES ------------------------------------------------")
+				# horizontal movement using the drivetrain
+				horizontalDirection = ""
+				rotateDirection = ""
+				if (toMove[0] < 0):
+					horizontalDirection = "LEFT"
+					rotateDirection = "LEFT"
+				else:
+					horizontalDirection = "RIGHT"
+					rotateDirection = "RIGHT"
+				
+				pixelsHorizontal = abs(toMove[0])
+				#rotateAmt = calculateRota/home/arl/Downloads/homeplus_autonomous-ops/turntable.pyionAngle(getDistance(pixelsHorizontal)) # fill in the blank here for calculations of degrees to rotate
+				#error in line above calling method in different class
+				
+				rotateAmt = 0
+				direction1 = directions.Directions(horizontalDirection, rotateDirection, pixelsHorizontal, rotateAmt)
+				print ("directions created")
+				
+				drivetrain_controls.driveToLocation(wp1, wp2, direction1)
+				print ("drivetrain control done")
+				
+				"""
+				# integrate movements together through concurrency
+				# manipulate arm
+				verticalDirection = ""
+				if (toMove[1] < 0):
+					verticalDirection = "UP"
+				else:
+					verticalDirection = "DOWN"
+				
+				pixelsVertical = abs(toMove[1])
+				
+				directions2 = directions(verticalDirection, rotate, pixelsVertical)
+				
+				arm_controls.levelClaw()
+				arm_controls.moveToCenter(directions2)
+				"""
+				
+				objectPickedUp = False
+				
+				print ("------------------------------------------------ END OF CONTROLS LOOP ------------------------------------------------")
+			
+			event.clear()
+			print ("EVENT CLOSED IN CONTROLS")
+			
+		t1.join()
+		break
+	
+	print ("END. fin")
+
+main()
