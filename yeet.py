@@ -110,8 +110,8 @@ def camera_detection():
 					toMove = (detection.Center[0] - screen_center[0], detection.Center[1] - screen_center[1])		
 			
 					# prevent this event from running
-					cameraEvent.clear()
 					controlsEvent.set()
+					cameraEvent.clear()
 					print (str(cameraEvent.isSet()) + " " + str(controlsEvent.isSet()))
 					print ("EVENT CLEARED BY DETECTION_CAMERA")
 					time.sleep(1)
@@ -146,27 +146,26 @@ def main():
 	
 	objectPickedUp = False
 	
-	"""
-	print ("about to start thread")
 	t1.start()
-	"""
 	
-	#while (not objectPickedUp):
 	while (not cameraEvent.isSet()):
-		print ("in loop")
+		pass
 		
+	#while (not objectPickedUp):
+	while (cameraEvent.isSet()):
+		"""
 		print ("about to start thread")
 		t1.start()
+		"""
+		time.sleep(5)
 		
-		print ("\n\n\n\n\n\n\n SLEEPING")
-		time.sleep(1)
-		
-		print ("\n\nabout to enter loop\n")
-		print (controlsEvent.isSet())
+		print ("\nabout to enter loop\n")
 		
 		while (cameraEvent.isSet() and not controlsEvent.isSet()):
 			pass
 			#print ("\n" + str(controlsEvent.isSet()))
+		
+		print ("checking to see if controls Event is set")
 		
 		if (controlsEvent.isSet()):
 			
@@ -180,7 +179,6 @@ def main():
 			
 			else: 
 				
-				print ("------------------------------------------------ ABOUT TO SET VARIABLES ------------------------------------------------")
 				# horizontal movement using the drivetrain
 				horizontalDirection = ""
 				rotateDirection = ""
@@ -220,16 +218,13 @@ def main():
 				"""
 				
 				objectPickedUp = False
-				
-				print ("------------------------------------------------ END OF CONTROLS LOOP ------------------------------------------------")
+			
 			
 			controlsEvent.clear()
-			print ("EVENT CLOSED IN CONTROLS")
-				
-			t1.join()
-			print ("thread joined")
+			cameraEvent.set()
+			
+			print ("END. fin")
 	
-	#t1.join()
-	print ("END. fin")
+	t1.join()
 
 main()
