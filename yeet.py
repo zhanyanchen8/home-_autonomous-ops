@@ -87,7 +87,8 @@ def camera_detection():
 		display = jetson.utils.glDisplay()
 
 		# process frames until user exits
-		while display.IsOpen() and not controlsEvent.isSet() and cameraEvent.isSet():
+		
+		while display.IsOpen():# and not controlsEvent.isSet() and cameraEvent.isSet():
 			
 			# capture the image
 			img, width, height = camera.CaptureRGBA()
@@ -96,11 +97,11 @@ def camera_detection():
 			detections = net.Detect(img, width, height)
 
 			# print the detections
-			print("detected {:d} objects in image".format(len(detections)))
+			#print("detected {:d} objects in image".format(len(detections)))
 			
 			for detection in detections:
 				print(detection)
-				print(net.GetClassDesc(detection.ClassID))
+				#print(net.GetClassDesc(detection.ClassID))
 				
 				print(detection.Center)
 				screen_center = (640/2, 480/2)
@@ -112,16 +113,16 @@ def camera_detection():
 					# prevent this event from running
 					controlsEvent.set()
 					cameraEvent.clear()
-					print (str(cameraEvent.isSet()) + " " + str(controlsEvent.isSet()))
-					print ("EVENT CLEARED BY DETECTION_CAMERA")
+					#print (str(cameraEvent.isSet()) + " " + str(controlsEvent.isSet()))
+					#print ("EVENT CLEARED BY DETECTION_CAMERA")
 					time.sleep(1)
-					print ("\n\nSLEPT")
+					#print ("\n\nSLEPT")
 					
 			# render the image
 			display.RenderOnce(img, width, height)
 
 			# update the title bar
-			display.SetTitle("{:s} | Network {:.0f} FPS".format(opt.network, 1000.0 / net.GetNetworkTime()))
+			#display.SetTitle("{:s} | Network {:.0f} FPS".format(opt.network, 1000.0 / net.GetNetworkTime()))
 
 			# synchronize with the GPU
 			if len(detections) > 0:
@@ -157,24 +158,23 @@ def main():
 		print ("about to start thread")
 		t1.start()
 		"""
-		time.sleep(5)
 		
-		print ("\nabout to enter loop\n")
+		#print ("yes there is an error here")
 		
 		while (cameraEvent.isSet() and not controlsEvent.isSet()):
 			pass
-			#print ("\n" + str(controlsEvent.isSet()))
+			#print("pass")
 		
-		print ("checking to see if controls Event is set")
+		#print ("checking to see if controls Event is set")
 		
 		if (controlsEvent.isSet()):
 			
 			global toMove
 			
-			print ("EVENT NOW IN CONTROLS")
+			#print ("EVENT NOW IN CONTROLS")
 			
 			if (toMove == None):                                                             
-				print ("error - check detection_camera.py program")
+			#	print ("error - check detection_camera.py program")
 				break
 			
 			else: 
@@ -195,10 +195,10 @@ def main():
 				
 				rotateAmt = 0
 				direction1 = directions.Directions(horizontalDirection, rotateDirection, pixelsHorizontal, rotateAmt)
-				print ("directions created")
+			#	print ("directions created")
 				
 				drivetrain_controls.driveToLocation(wp1, wp2, direction1)
-				print ("drivetrain control done")
+			#	print ("drivetrain control done")
 				
 				"""
 				# integrate movements together through concurrency
@@ -219,12 +219,11 @@ def main():
 				
 				objectPickedUp = False
 			
-			
 			controlsEvent.clear()
 			cameraEvent.set()
 			
 			print ("END. fin")
-	
+			
 	t1.join()
 
 main()
