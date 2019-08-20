@@ -25,50 +25,23 @@
 import jetson.inference
 import jetson.utils
 import argparse
+import time
+
+import sys
+sys.path.append("/home/arl/Documents/homeplus_autonomous-ops/")
 import directions
 import drivetrain_controls
 import arm_controls
 import wheel_pair
 import turntable
-import time
 
 """
-import sys
-sys.path.append("/home/arl/Documents/homeplus_autonomous-ops/")
-import controls
+sys.path.append("/home/arl/Documents/homeplus_autonomous-ops/jetson-inference/utils/")
+import display
 """
 
-"""
 from threading import Event
 import threading
-event = threading.Event()
-"""
-
-"""
-global lockReleased
-lockReleased = False
-#lockReleased = True
-"""
-
-def calcMvt (detection, screen_center):
-	move_x = detection.Center[0] - screen_center[0]
-	move_y = detection.Center[1] - screen_center[1]
-	
-	return (move_x, move_y)
-
-###################################################
-"""
-import sys
-sys.path.append("/home/arl/Documents/homeplus_autonomous-ops/jetson/python/examples")
-import detection_camera
-"""
-
-from threading import Thread, RLock, Event
-import threading
-print ("imports complete")
-
-global objectPickedUp
-objectPickedUp = False
 
 cameraEvent = threading.Event()
 cameraEvent.clear()
@@ -82,7 +55,6 @@ toMove = (0,0)
 # HERE - use list of motors to begin instantiating objects (wheelPairs, turntable, arm, etc.)
 wp1 = wheel_pair.wheel_pair(1, 3, 2)
 wp2 = wheel_pair.wheel_pair(2, 4, 2)
-###################################################
 
 
 def camera_detection():
@@ -142,7 +114,7 @@ def camera_detection():
 					print (cameraEvent.isSet())
 					controlsEvent.set()
 					print ("EVENT CLEARED BY DETECTION_CAMERA")
-					display.closeDisplay()
+					display.DestroyDisplay()
 					return
 					
 			# render the image
@@ -236,12 +208,11 @@ def main():
 			
 			controlsEvent.clear()
 			print ("EVENT CLOSED IN CONTROLS")
-				
-		#t1.join()
 	
 	print ("END. fin")
 
 main()
 
 # /home/arl/Documents/homeplus_autonomous-ops/jetson/utils/display - change the method in here OR attempt to utilize the display method
+
 
