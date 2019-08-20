@@ -72,7 +72,7 @@ def camera_detection():
 								   formatter_class=argparse.RawTextHelpFormatter, epilog=jetson.inference.detectNet.Usage())
 
 		parser.add_argument("--network", type=str, default="ssd-mobilenet-v1", help="pre-trained model to load, see below for options")
-		parser.add_argument("--threshold", type=float, default=0.6, help="minimum detection threshold to use")
+		parser.add_argument("--threshold", type=float, default=0.5, help="minimum detection threshold to use")
 		parser.add_argument("--camera", type=str, default="/dev/video0", help="index of the MIPI CSI camera to use (NULL for CSI camera 0)\nor for VL42 cameras the /dev/video node to use.\nby default, MIPI CSI camera 0 will be used.")
 		parser.add_argument("--width", type=int, default=640, help="desired width of camera stream (default is 640 pixels)")
 		parser.add_argument("--height", type=int, default=480, help="desired height of camera stream (default is 480 pixels)")
@@ -105,17 +105,17 @@ def camera_detection():
 				print(detection.Center)
 				screen_center = (640/2, 480/2)
 				
-				if (detection.ClassID == 44):
+				if (detection.ClassID == 44 and detection.Confidence > 0.6):
 					global toMove
-					toMove = (detection.Center[0] - screen_center[0], detection.Center[1] - screen_center[1])
+					toMove = (detection.Center[0] - screen_center[0], detection.Center[1] - screen_center[1])		
 			
-					# prevent this event  from running
+					# prevent this event from running
 					cameraEvent.clear()
-					print (cameraEvent.isSet())
 					controlsEvent.set()
+					print (str(cameraEvent.isSet()) + " " + str(controlsEvent.isSet()))
 					print ("EVENT CLEARED BY DETECTION_CAMERA")
-					display.DestroyDisplay()
-					return
+					time.sleep(1)
+					print ("\n\nSLEPT")
 					
 			# render the image
 			display.RenderOnce(img, width, height)
@@ -130,6 +130,8 @@ def camera_detection():
 			# print out performance info
 			# net.PrintProfilerTimes()
 
+t1 = threading.Thread(target=camera_detection, args=())
+
 def calculateRotationAngle(distInches, turntable):
 	return (float)(distInches)/(turntable.tableRadius) * 360
 
@@ -143,19 +145,33 @@ def getDistance(px):
 def main():
 	
 	objectPickedUp = False
-	global toMove
 	
-	while (True):
+	"""
+	print ("about to start thread")
+	t1.start()
+	"""
+	
+	#while (not objectPickedUp):
+	while (not cameraEvent.isSet()):
+		print ("in loop")
 		
+		print ("about to start thread")
+		t1.start()
+		
+		print ("\n\n\n\n\n\n\n SLEEPING")
+		time.sleep(1)
+		
+		print ("\n\nabout to enter loop\n")
 		print (controlsEvent.isSet())
 		
-		cameraEvent.set()
-		while (cameraEvent.isSet()):
-			camera_detection()
+		while (cameraEvent.isSet() and not controlsEvent.isSet()):
+			pass
+			#print ("\n" + str(controlsEvent.isSet()))
 		
-		while (controlsEvent.isSet()):
+		if (controlsEvent.isSet()):
 			
-			controlsEvent.set()
+			global toMove
+			
 			print ("EVENT NOW IN CONTROLS")
 			
 			if (toMove == None):                                                             
@@ -163,6 +179,7 @@ def main():
 				break
 			
 			else: 
+				
 				print ("------------------------------------------------ ABOUT TO SET VARIABLES ------------------------------------------------")
 				# horizontal movement using the drivetrain
 				horizontalDirection = ""
@@ -208,11 +225,11 @@ def main():
 			
 			controlsEvent.clear()
 			print ("EVENT CLOSED IN CONTROLS")
+				
+			t1.join()
+			print ("thread joined")
 	
+	#t1.join()
 	print ("END. fin")
 
 main()
-
-# /home/arl/Documents/homeplus_autonomous-ops/jetson/utils/display - change the method in here OR attempt to utilize the display method
-
-
