@@ -35,11 +35,6 @@ import arm_controls
 import wheel_pair
 import turntable
 
-"""
-sys.path.append("/home/arl/Documents/homeplus_autonomous-ops/jetson-inference/utils/")
-import display
-"""
-
 from threading import Event
 import threading
 
@@ -60,12 +55,8 @@ wp2 = wheel_pair.wheel_pair(2, 4, 2)
 def camera_detection():
 	
 	while (not controlsEvent.isSet()):
-		# set event such that this event is the only one that can run		
-		print ("EVENT ABOUT TO BE SET BY CAMERA")
+		
 		cameraEvent.set()
-		print ("EVENT SET BY CAMERA")
-			
-		print ("in detection_camera")
 		
 		# parse the command line
 		parser = argparse.ArgumentParser(description="Locate objects in a live camera stream using an object detection DNN.", 
@@ -88,20 +79,16 @@ def camera_detection():
 
 		# process frames until user exits
 		
-		while display.IsOpen():# and not controlsEvent.isSet() and cameraEvent.isSet():
+		while display.IsOpen():
 			
 			# capture the image
 			img, width, height = camera.CaptureRGBA()
 
 			# detect objects in the image (with overlay)
 			detections = net.Detect(img, width, height)
-
-			# print the detections
-			#print("detected {:d} objects in image".format(len(detections)))
 			
 			for detection in detections:
 				print(detection)
-				#print(net.GetClassDesc(detection.ClassID))
 				
 				print(detection.Center)
 				screen_center = (640/2, 480/2)
@@ -110,26 +97,19 @@ def camera_detection():
 					global toMove
 					toMove = (detection.Center[0] - screen_center[0], detection.Center[1] - screen_center[1])		
 			
-					# prevent this event from running
 					controlsEvent.set()
 					cameraEvent.clear()
-					#print (str(cameraEvent.isSet()) + " " + str(controlsEvent.isSet()))
-					#print ("EVENT CLEARED BY DETECTION_CAMERA")
 					time.sleep(1)
-					#print ("\n\nSLEPT")
 					
 			# render the image
 			display.RenderOnce(img, width, height)
 
 			# update the title bar
-			#display.SetTitle("{:s} | Network {:.0f} FPS".format(opt.network, 1000.0 / net.GetNetworkTime()))
+			display.SetTitle("{:s} | Network {:.0f} FPS".format(opt.network, 1000.0 / net.GetNetworkTime()))
 
 			# synchronize with the GPU
 			if len(detections) > 0:
 				jetson.utils.cudaDeviceSynchronize()
-
-			# print out performance info
-			# net.PrintProfilerTimes()
 
 t1 = threading.Thread(target=camera_detection, args=())
 
@@ -152,29 +132,17 @@ def main():
 	while (not cameraEvent.isSet()):
 		pass
 		
-	#while (not objectPickedUp):
 	while (cameraEvent.isSet()):
-		"""
-		print ("about to start thread")
-		t1.start()
-		"""
-		
-		#print ("yes there is an error here")
 		
 		while (cameraEvent.isSet() and not controlsEvent.isSet()):
 			pass
-			#print("pass")
-		
-		#print ("checking to see if controls Event is set")
 		
 		if (controlsEvent.isSet()):
 			
 			global toMove
 			
-			#print ("EVENT NOW IN CONTROLS")
 			
 			if (toMove == None):                                                             
-			#	print ("error - check detection_camera.py program")
 				break
 			
 			else: 
@@ -195,10 +163,8 @@ def main():
 				
 				rotateAmt = 0
 				direction1 = directions.Directions(horizontalDirection, rotateDirection, pixelsHorizontal, rotateAmt)
-			#	print ("directions created")
 				
 				drivetrain_controls.driveToLocation(wp1, wp2, direction1)
-			#	print ("drivetrain control done")
 				
 				"""
 				# integrate movements together through concurrency
@@ -221,8 +187,6 @@ def main():
 			
 			controlsEvent.clear()
 			cameraEvent.set()
-			
-			print ("END. fin")
 			
 	t1.join()
 
