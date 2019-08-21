@@ -47,11 +47,19 @@ controlsEvent.clear()
 global toMove
 toMove = (0,0)
 
-# HERE - use list of motors to begin instantiating objects (wheelPairs, turntable, arm, etc.)
 wp1 = wheel_pair.wheel_pair(1, 3, 2)
 wp2 = wheel_pair.wheel_pair(2, 4, 2)
 
+"""
+STARTS UP OBJECT DETECTOIN MODULE FROM THE JETSON
+currently programmed to return values should the object detected be a bottle (class 44)
+by resetting the value for toMove
 
+threaded with main() to provide synchronous operation of both threads
+and prevent any overloads of system memory on the Jetson
+
+More Information/Cloning GitHub Repository: https://github.com/dusty-nv/jetson-inference
+"""
 def camera_detection():
 	
 	while (not controlsEvent.isSet()):
@@ -93,6 +101,7 @@ def camera_detection():
 				print(detection.Center)
 				screen_center = (640/2, 480/2)
 				
+				# determine and change toMove value if bottle (ClassID 44) is found
 				if (detection.ClassID == 44 and detection.Confidence > 0.6):
 					global toMove
 					toMove = (detection.Center[0] - screen_center[0], detection.Center[1] - screen_center[1])		
@@ -113,6 +122,9 @@ def camera_detection():
 
 t1 = threading.Thread(target=camera_detection, args=())
 
+
+# DISREGARD TWO FUNCTIONS BELOW - WERE USED FOR TESTING PURPOSES
+"""
 def calculateRotationAngle(distInches, turntable):
 	return (float)(distInches)/(turntable.tableRadius) * 360
 
@@ -122,8 +134,19 @@ def getDistance(px):
 	distanceToMove = px/pixelsPerInch
 		
 	return distanceToMove
-				
+"""
+#
+
+"""
+MAIN METHOD USED TO OPERATE THE CONTROLS OF THE ROBOT
+
+uses determined values to move from camera_detection() to send to
+Arduino via respective objects and R2 communication protocol
+"""
 def main():
+	
+	# integrate nunchuk movement here
+	# wait for confirmation from Arduino that procedure complete
 	
 	objectPickedUp = False
 	
@@ -141,7 +164,6 @@ def main():
 			
 			global toMove
 			
-			
 			if (toMove == None):                                                             
 				break
 			
@@ -158,8 +180,6 @@ def main():
 					rotateDirection = "RIGHT"
 				
 				pixelsHorizontal = abs(toMove[0])
-				#rotateAmt = calculateRota/home/arl/Downloads/homeplus_autonomous-ops/turntable.pyionAngle(getDistance(pixelsHorizontal)) # fill in the blank here for calculations of degrees to rotate
-				#error in line above calling method in different class
 				
 				rotateAmt = 0
 				direction1 = directions.Directions(horizontalDirection, rotateDirection, pixelsHorizontal, rotateAmt)
