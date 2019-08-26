@@ -26,6 +26,7 @@ import jetson.inference
 import jetson.utils
 import argparse
 import time
+import serial
 
 import sys
 sys.path.append("/home/arl/Documents/homeplus_autonomous-ops/")
@@ -100,8 +101,6 @@ def camera_detection(objects):
 			jetson.utils.cudaDeviceSynchronize()
 
 def readInput():
-	import serial
-	
 	with serial.Serial('/dev/ttyACM0', 9600, timeout=10) as ser:
 		objects = ser.readline().decode('ASCII')
 		return objects
@@ -145,8 +144,9 @@ def begin_detecting():
 	print (boxDim)
 	
 	#pass encoding via center of bounding box, width, height
-	comms.toArduino(center, (str)(boxDim[0]), (str)(boxDim[1]))
-	
+	ser = serial.Serial('/dev/ttyACM0', 9600)
+	writeBack = (str)(center) + ";" + (str)(boxDim[0]) + ";" + (str)(boxDim[1])
+	ser.write(writeBack)
 	
 begin_detecting()
 	
