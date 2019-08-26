@@ -29,12 +29,15 @@ import time
 
 import sys
 sys.path.append("/home/arl/Documents/homeplus_autonomous-ops/")
-import directions
+import communications as comms
 
 #import Set
 
-global toMove
-toMove = (0,0)
+global boxDim
+boxDim = (0, 0)
+
+global center
+center = (-1, -1)
 
 """
 STARTS UP OBJECT DETECTOIN MODULE FROM THE JETSON
@@ -78,13 +81,12 @@ def camera_detection(objects):
 		for detection in detections:
 			#print(detection)
 			print(net.GetClassDesc(detection.ClassID))
-			print(detection.Center)
-			screen_center = (640/2, 480/2)
 			
-			# determine and change toMove value if bottle (ClassID 44) is found
-			if (net.GetClassDesc(detection.ClassID) in objects and detection.Confidence > 0.8):
-				global toMove
-				toMove = (detection.Center[0] - screen_center[0], detection.Center[1] - screen_center[1])
+			if (net.GetClassDesc(detection.ClassID) in objects and detection.Confidence > 0.7):
+				global center
+				global boxDim
+				boxSize = (detection.Width, detection.Height)
+				center = (detection.Center[0], detection.Center[1])
 				return net.GetClassDesc(detection.ClassID)
 				
 		# render the image
@@ -97,28 +99,32 @@ def camera_detection(objects):
 		if len(detections) > 0:
 			jetson.utils.cudaDeviceSynchronize()
 
+def readInput():
+	import serial
+	
+	with serial.Serial('/dev/ttyACM0', 9600, timeout=10) as ser:
+		objects = ser.readline().decode('ASCII')
+		return objects
+		
 """
 MAIN METHOD USED TO OPERATE THE CONTROLS OF THE ROBOT
 
 takes in string of objects to find from Arduino via Serial and 
-returns...
+returns to Arduino center, width, and height of detected bounding box
 """
-def main():
+def begin_detecting():
 	
 	# setting up new variables
-	#import serial
-	#ser = serial.Serial('/dev/ttyACM0', 9600)
 	objectFound = False
 			
-	global toMove	
-	if (toMove == None):                                                             
-		print ("toMove issue")
-		return
+	global center
+	global boxSize
 	
 	# parse through string detailing objects to find, saving each in a set	
 	toFind = set()
-	#objects = ser.read()
-	objects = "bottle,cup,"
+	#objects = readInput()
+	objects="bottle,cup,"
+	
 	i = 0
 	
 	while (not (i == len(objects) - 1)):
@@ -133,6 +139,14 @@ def main():
 	verified = camera_detection(toFind)
 	
 	print (verified)
-	print (toMove)
-
-main()
+	
+	# size and location
+	print (center)
+	print (boxDim)
+	
+	#pass encoding via center of bounding box, width, height
+	comms.toArduino(center, (str)(boxDim[0]), (str)(boxDim[1]))
+	
+	
+begin_detecting()
+	
