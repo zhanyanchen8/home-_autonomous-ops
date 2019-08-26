@@ -32,13 +32,23 @@ import sys
 sys.path.append("/home/arl/Documents/homeplus_autonomous-ops/")
 import communications as comms
 
-#import Set
+from threading import Thread, Event
+import threading
+
+cameraEvent = threading.Event()
+cameraEvent.clear()
+
+controlsEvent = threading.Event()
+controlsEvent.clear()
 
 global boxDim
 boxDim = (0, 0)
 
 global center
 center = (-1, -1)
+
+global classDesc
+classDesc = ""
 
 """
 STARTS UP OBJECT DETECTOIN MODULE FROM THE JETSON
@@ -49,57 +59,70 @@ if a particular objects has been found or not
 More Information/Cloning GitHub Repository: https://github.com/dusty-nv/jetson-inference
 """
 def camera_detection(objects):	
-		
-	# parse the command line
-	parser = argparse.ArgumentParser(description="Locate objects in a live camera stream using an object detection DNN.", 
-							   formatter_class=argparse.RawTextHelpFormatter, epilog=jetson.inference.detectNet.Usage())
-
-	parser.add_argument("--network", type=str, default="ssd-mobilenet-v1", help="pre-trained model to load, see below for options")
-	parser.add_argument("--threshold", type=float, default=0.5, help="minimum detection threshold to use")
-	parser.add_argument("--camera", type=str, default="/dev/video0", help="index of the MIPI CSI camera to use (NULL for CSI camera 0)\nor for VL42 cameras the /dev/video node to use.\nby default, MIPI CSI camera 0 will be used.")
-	parser.add_argument("--width", type=int, default=640, help="desired width of camera stream (default is 640 pixels)")
-	parser.add_argument("--height", type=int, default=480, help="desired height of camera stream (default is 480 pixels)")
-
-	opt, argv = parser.parse_known_args()
-
-	# load the object detection network
-	net = jetson.inference.detectNet(opt.network, argv, opt.threshold)
-
-	# create the camera and display
-	camera = jetson.utils.gstCamera(opt.width, opt.height, opt.camera)
-	display = jetson.utils.glDisplay()
-
-	# process frames until user exits
 	
-	while display.IsOpen():
+	while (not controlsEvent.isSet()):
 		
-		# capture the image
-		img, width, height = camera.CaptureRGBA()
+		cameraEvent.set()
+	
+		# parse the command line
+		parser = argparse.ArgumentParser(description="Locate objects in a live camera stream using an object detection DNN.", 
+								   formatter_class=argparse.RawTextHelpFormatter, epilog=jetson.inference.detectNet.Usage())
 
-		# detect objects in the image (with overlay)
-		detections = net.Detect(img, width, height)
+		parser.add_argument("--network", type=str, default="ssd-mobilenet-v1", help="pre-trained model to load, see below for options")
+		parser.add_argument("--threshold", type=float, default=0.5, help="minimum detection threshold to use")
+		parser.add_argument("--camera", type=str, default="/dev/video0", help="index of the MIPI CSI camera to use (NULL for CSI camera 0)\nor for VL42 cameras the /dev/video node to use.\nby default, MIPI CSI camera 0 will be used.")
+		parser.add_argument("--width", type=int, default=640, help="desired width of camera stream (default is 640 pixels)")
+		parser.add_argument("--height", type=int, default=480, help="desired height of camera stream (default is 480 pixels)")
+
+		opt, argv = parser.parse_known_args()
+
+		# load the object detection network
+		net = jetson.inference.detectNet(opt.network, argv, opt.threshold)
+
+		# create the camera and display
+		camera = jetson.utils.gstCamera(opt.width, opt.height, opt.camera)
+		display = jetson.utils.glDisplay()
+
+		# process frames until user exits
 		
-		for detection in detections:
-			#print(detection)
-			print(net.GetClassDesc(detection.ClassID))
+		while display.IsOpen():
 			
-			if (net.GetClassDesc(detection.ClassID) in objects and detection.Confidence > 0.7):
-				global center
-				global boxDim
-				boxSize = (detection.Width, detection.Height)
-				center = (detection.Center[0], detection.Center[1])
-				return net.GetClassDesc(detection.ClassID)
+			# capture the image
+			img, width, height = camera.CaptureRGBA()
+
+			# detect objects in the image (with overlay)
+			detections = net.Detect(img, width, height)
+			
+			for detection in detections:
+				#print(detection)
+				print(net.GetClassDesc(detection.ClassID))
 				
-		# render the image
-		display.RenderOnce(img, width, height)
+				if (net.GetClassDesc(detection.ClassID) in objects and detection.Confidence > 0.7):
+					global center
+					global boxDim
+					global classDesc
+					boxSize = (detection.Width, detection.Height)
+					center = (detection.Center[0], detection.Center[1])
+					classDesc = net.GetClassDesc(detection.ClassID)
+					controlsEvent.set()
+					cameraEvent.clear()
+					time.sleep(1)
+					
+			# render the image
+			display.RenderOnce(img, width, height)
 
-		# update the title bar
-		display.SetTitle("{:s} | Network {:.0f} FPS".format(opt.network, 1000.0 / net.GetNetworkTime()))
+			# update the title bar
+			display.SetTitle("{:s} | Network {:.0f} FPS".format(opt.network, 1000.0 / net.GetNetworkTime()))
 
-		# synchronize with the GPU
-		if len(detections) > 0:
-			jetson.utils.cudaDeviceSynchronize()
+			# synchronize with the GPU
+			if len(detections) > 0:
+				jetson.utils.cudaDeviceSynchronize()
 
+"""
+
+read input from Arduino
+
+"""
 def readInput():
 	with serial.Serial('/dev/ttyACM0', 9600, timeout=10) as ser:
 		objects = ser.readline().decode('ASCII')
@@ -112,12 +135,6 @@ takes in string of objects to find from Arduino via Serial and
 returns to Arduino center, width, and height of detected bounding box
 """
 def begin_detecting():
-	
-	# setting up new variables
-	objectFound = False
-			
-	global center
-	global boxSize
 	
 	# parse through string detailing objects to find, saving each in a set	
 	toFind = set()
@@ -135,18 +152,36 @@ def begin_detecting():
 		i = endIndex + 1;	
 	
 	print ("end parsing, about to find")
-	verified = camera_detection(toFind)
 	
-	print (verified)
+	t1 = threading.Thread(target=camera_detection, args=(toFind,))
+	t1.start()
 	
-	# size and location
-	print (center)
-	print (boxDim)
-	
-	#pass encoding via center of bounding box, width, height
-	ser = serial.Serial('/dev/ttyACM0', 9600)
-	writeBack = (str)(center) + ";" + (str)(boxDim[0]) + ";" + (str)(boxDim[1])
-	ser.write(writeBack)
+	while (not cameraEvent.isSet()):
+		pass
+		
+	while (cameraEvent.isSet()):
+		
+		while (cameraEvent.isSet() and not controlsEvent.isSet()):
+			pass
+		
+		if (controlsEvent.isSet()):
+			global center
+			global boxSize
+			global classDesc
+			
+			# size and location
+			print (center)
+			print (boxDim)
+			
+			#pass encoding via center of bounding box, width, height
+			ser = serial.Serial('/dev/ttyACM0', 9600)
+			writeBack = classDesc + ";" + (str)(center) + ";" + (str)(boxDim[0]) + ";" + (str)(boxDim[1]) + ";"
+			ser.write(writeBack)
+			
+			controlsEvent.clear()
+			cameraEvent.set()
+			
+	t1.join()
 	
 begin_detecting()
 	
