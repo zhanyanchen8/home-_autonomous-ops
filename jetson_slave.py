@@ -41,6 +41,9 @@ cameraEvent.clear()
 controlsEvent = threading.Event()
 controlsEvent.clear()
 
+sendEvent = threading.Event()
+sendEvent.clear()
+
 global boxDim
 boxDim = (0, 0)
 
@@ -51,7 +54,7 @@ global classDesc
 classDesc = ""
 
 """
-STARTS UP OBJECT DETECTOIN MODULE FROM THE JETSON
+STARTS UP OBJECT DETECTION MODULE FROM THE JETSON
 
 Take in an <i>object</i> set and uses camera_detection to determine
 if a particular objects has been found or not
@@ -101,7 +104,7 @@ def camera_detection(objects):
 					global center
 					global boxDim
 					global classDesc
-					boxSize = (detection.Width, detection.Height)
+					boxDim = (detection.Width, detection.Height)
 					center = (detection.Center[0], detection.Center[1])
 					classDesc = net.GetClassDesc(detection.ClassID)
 					controlsEvent.set()
@@ -127,7 +130,22 @@ def readInput():
 	with serial.Serial('/dev/ttyACM0', 9600, timeout=10) as ser:
 		objects = ser.readline().decode('ASCII')
 		return objects
-		
+
+def checkStatus():
+	if (readInput() == "request"):
+		sendEvent.set()
+
+"""
+
+to write data back to the Arduino
+
+"""
+def sendBack(writeBack):
+	ser = serial.Serial('/dev/ttyACM0', 9600)
+	ser.write(writeBack)
+	sendEvent.clear()
+	print (writeBack + "\nevent sent")
+	
 """
 MAIN METHOD USED TO OPERATE THE CONTROLS OF THE ROBOT
 
@@ -138,7 +156,7 @@ def begin_detecting():
 	
 	# parse through string detailing objects to find, saving each in a set	
 	toFind = set()
-	#objects = readInput()
+	# objects = readInput()
 	objects="bottle,cup,"
 	
 	i = 0
@@ -154,7 +172,9 @@ def begin_detecting():
 	print ("end parsing, about to find")
 	
 	t1 = threading.Thread(target=camera_detection, args=(toFind,))
+	t2 = threading.Thread(target=checkStatus, args=())
 	t1.start()
+	t2.start()
 	
 	while (not cameraEvent.isSet()):
 		pass
@@ -166,22 +186,24 @@ def begin_detecting():
 		
 		if (controlsEvent.isSet()):
 			global center
-			global boxSize
+			global boxDim
 			global classDesc
 			
 			# size and location
 			print (center)
 			print (boxDim)
 			
-			#pass encoding via center of bounding box, width, height
-			ser = serial.Serial('/dev/ttyACM0', 9600)
-			writeBack = classDesc + ";" + (str)(center) + ";" + (str)(boxDim[0]) + ";" + (str)(boxDim[1]) + ";"
-			ser.write(writeBack)
+			if (sendEvent.isSet()):
+				#pass encoding via center of bounding box, width, height after 5 detections OR default values after 3 minutes
+				writeBack = classDesc + ";" + (str)(center) + ";" + (str)(boxDim[0]) + ";" + (str)(boxDim[1]) + ";"
+				sendBack(writeBack)
 			
 			controlsEvent.clear()
 			cameraEvent.set()
 			
+	t2.join()
 	t1.join()
 	
 begin_detecting()
 	
+
