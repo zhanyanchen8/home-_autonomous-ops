@@ -30,9 +30,8 @@ import serial
 
 import sys
 sys.path.append("/home/arl/Documents/homeplus_autonomous-ops/")
-import communications as comms
 
-from threading import Thread, Event
+from threading import Thread, Event, Timer
 import threading
 
 cameraEvent = threading.Event()
@@ -174,7 +173,7 @@ def begin_detecting():
 	# parse through string detailing objects to find, saving each in a set	
 	toFind = set()
 	objects = readInput()
-	# objects="bottle,cup,"
+	#objects="bottle,cup,"
 	
 	i = 0
 	
@@ -210,31 +209,49 @@ def begin_detecting():
 			print (center)
 			print (boxDim)
 			
-			if (sendEvent.isSet()):
-				print ("YEEEAAAAA BOI")
-				
-			"""
+			# sendEvent.set()
+			
 			if (sendEvent.isSet()):
 				#pass encoding via center of bounding box, width, height after 5 detections OR default values after 3 minutes
-				t = Timer(180, shootError) 
+				t = threading.Timer(180, shootError) 
 				t.start()
 				
-				#create three lists of center, width, and height and average the values together
+				#create three lists of center, width, and height and average the values together after 5 shots
 				horList = []
 				vertList = []
 				widthList = []
 				heightList = []
 				
 				j = 0
-				for j in range(0. 5):
-					horList.append(center[0])
-					vertList.append(center[1])
-					widthList.append(boxDim[0])
-					heightList.append(boxDim[1])
+				sumHor = 0
+				sumVert = 0
+				sumWidth = 0
+				sumHeight = 0
 				
-				writeBack = classDesc + ";" + (str)(center) + ";" + (str)(boxDim[0]) + ";" + (str)(boxDim[1]) + ";"
+				for j in range(0, 5):
+					if (boxDim[0] != 0 or boxDim[1] != 0):
+						horList.append(center[0])
+						vertList.append(center[1])
+						widthList.append(boxDim[0])
+						heightList.append(boxDim[1])
+						
+						sumHor = sumHor + center[0]
+						sumVert = sumVert + center[1]
+						sumWidth = sumWidth + boxDim[0]
+						sumHeight = sumHeight + boxDim[1]
+						
+						time.sleep(1)
+						
+					t.cancel()
+					
+				center = (sumHor/5.0, sumVert/5.0)
+				width = sumWidth/5.0
+				height = sumHeight/5.0
+						
+				writeBack = classDesc + ";" + (str)(center) + ";" + (str)(width) + ";" + (str)(height) + ";"
+					
 				sendBack(writeBack)
-			"""
+				sendEvent.clear()
 			
 			controlsEvent.clear()
 			cameraEvent.set()
