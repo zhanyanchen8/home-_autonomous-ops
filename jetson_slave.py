@@ -156,12 +156,59 @@ def sendBack(writeBack):
 	
 
 def shootError():
-	print ("time is up")
+	global ser, t1, t2
+	ser.write("NOtime")
+	t1.join()
+	t2.join()
+	sys.exit(999)
+
+global t, t1, t2
+global toFind
+toFind = set()
+t = threading.Timer(200, shootError) 
+t1 = threading.Thread(target=camera_detection, args=(toFind,))
+t2 = threading.Thread(target=checkStatus, args=())
 	
-	if (classDesc == ""):
-		print("no object found")
-	return 
-	 
+def getValues ():
+	global center
+	global boxDim
+	global classDesc
+	global t
+	
+	 #create three lists of center, width, and height and average the values together after 5 shots
+	horList = []
+	vertList = []
+	widthList = []
+	heightList = []
+	
+	j = 0
+	sumHor = 0
+	sumVert = 0
+	sumWidth = 0
+	sumHeight = 0
+	
+	for j in range(0, 5):
+		if (boxDim[0] != 0 or boxDim[1] != 0):
+			horList.append(center[0])
+			vertList.append(center[1])
+			widthList.append(boxDim[0])
+			heightList.append(boxDim[1])
+			
+			sumHor = sumHor + center[0]
+			sumVert = sumVert + center[1]
+			sumWidth = sumWidth + boxDim[0]
+			sumHeight = sumHeight + boxDim[1]
+			
+			t.cancel()
+		
+	center = (sumHor/5.0, sumVert/5.0)
+	width = sumWidth/5.0
+	height = sumHeight/5.0
+	
+	return classDesc + ";" + (str)(center) + ";" + (str)(width) + ";" + (str)(height) + ";"
+
+
+
 """
 MAIN METHOD USED TO OPERATE THE CONTROLS OF THE ROBOT
 
@@ -171,7 +218,7 @@ returns to Arduino center, width, and height of detected bounding box
 def begin_detecting():
 	
 	# parse through string detailing objects to find, saving each in a set	
-	toFind = set()
+	global toFind
 	objects = readInput()
 	#objects="bottle,cup,"
 	
@@ -181,14 +228,11 @@ def begin_detecting():
 		endIndex = objects.find(",", i)
 		if (endIndex == -1):
 			break
-		print (objects[i:endIndex])
 		toFind.add(objects[i:endIndex])
-		i = endIndex + 1;	
+		i = endIndex + 1
 	
-	print ("end parsing, about to find")
-	
-	t1 = threading.Thread(target=camera_detection, args=(toFind,))
-	t2 = threading.Thread(target=checkStatus, args=())
+	global t1, t2, t
+	t.start()
 	t1.start()
 	t2.start()
 	
@@ -196,60 +240,19 @@ def begin_detecting():
 		pass
 		
 	while (cameraEvent.isSet()):
-		
+			
 		while (cameraEvent.isSet() and not controlsEvent.isSet()):
 			pass
 		
 		if (controlsEvent.isSet()):
-			global center
-			global boxDim
-			global classDesc
 			
-			# size and location
-			print (center)
-			print (boxDim)
-			
-			# sendEvent.set()
+			while (not sendEvent.isSet()):
+				pass
 			
 			if (sendEvent.isSet()):
 				#pass encoding via center of bounding box, width, height after 5 detections OR default values after 3 minutes
-				t = threading.Timer(180, shootError) 
-				t.start()
-				
-				#create three lists of center, width, and height and average the values together after 5 shots
-				horList = []
-				vertList = []
-				widthList = []
-				heightList = []
-				
-				j = 0
-				sumHor = 0
-				sumVert = 0
-				sumWidth = 0
-				sumHeight = 0
-				
-				for j in range(0, 5):
-					if (boxDim[0] != 0 or boxDim[1] != 0):
-						horList.append(center[0])
-						vertList.append(center[1])
-						widthList.append(boxDim[0])
-						heightList.append(boxDim[1])
 						
-						sumHor = sumHor + center[0]
-						sumVert = sumVert + center[1]
-						sumWidth = sumWidth + boxDim[0]
-						sumHeight = sumHeight + boxDim[1]
-						
-						time.sleep(1)
-						
-					t.cancel()
-					
-				center = (sumHor/5.0, sumVert/5.0)
-				width = sumWidth/5.0
-				height = sumHeight/5.0
-						
-				writeBack = classDesc + ";" + (str)(center) + ";" + (str)(width) + ";" + (str)(height) + ";"
-					
+				writeBack = getValues()
 				sendBack(writeBack)
 				sendEvent.clear()
 			
@@ -262,4 +265,3 @@ def begin_detecting():
 	
 begin_detecting()
 	
-
