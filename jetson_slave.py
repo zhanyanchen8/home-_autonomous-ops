@@ -53,6 +53,9 @@ center = (-1, -1)
 global classDesc
 classDesc = ""
 
+global ser
+ser = serial.Serial('/dev/ttyACM0', 9600)
+
 """
 STARTS UP OBJECT DETECTION MODULE FROM THE JETSON
 
@@ -97,7 +100,6 @@ def camera_detection(objects):
 			detections = net.Detect(img, width, height)
 			
 			for detection in detections:
-				#print(detection)
 				print(net.GetClassDesc(detection.ClassID))
 				
 				if (net.GetClassDesc(detection.ClassID) in objects and detection.Confidence > 0.7):
@@ -109,7 +111,6 @@ def camera_detection(objects):
 					classDesc = net.GetClassDesc(detection.ClassID)
 					controlsEvent.set()
 					cameraEvent.clear()
-					time.sleep(1)
 					
 			# render the image
 			display.RenderOnce(img, width, height)
@@ -127,12 +128,20 @@ read input from Arduino
 
 """
 def readInput():
-	with serial.Serial('/dev/ttyACM0', 9600, timeout=10) as ser:
-		objects = ser.readline().decode('ASCII')
-		return objects
+	global ser
+	objects = ser.readline().decode('ASCII')
+	return objects
 
+"""
+
+checks to see if a request has been sent by the Arduino for data
+
+"""
 def checkStatus():
-	if (readInput() == "request"):
+	phrase = readInput()
+	
+	if (phrase.find("request") != -1):
+		print ("request received")
 		sendEvent.set()
 
 """
@@ -141,11 +150,19 @@ to write data back to the Arduino
 
 """
 def sendBack(writeBack):
-	ser = serial.Serial('/dev/ttyACM0', 9600)
+	global ser
 	ser.write(writeBack)
 	sendEvent.clear()
 	print (writeBack + "\nevent sent")
 	
+
+def shootError():
+	print ("time is up")
+	
+	if (classDesc == ""):
+		print("no object found")
+	return 
+	 
 """
 MAIN METHOD USED TO OPERATE THE CONTROLS OF THE ROBOT
 
@@ -156,8 +173,8 @@ def begin_detecting():
 	
 	# parse through string detailing objects to find, saving each in a set	
 	toFind = set()
-	# objects = readInput()
-	objects="bottle,cup,"
+	objects = readInput()
+	# objects="bottle,cup,"
 	
 	i = 0
 	
@@ -194,15 +211,37 @@ def begin_detecting():
 			print (boxDim)
 			
 			if (sendEvent.isSet()):
+				print ("YEEEAAAAA BOI")
+				
+			"""
+			if (sendEvent.isSet()):
 				#pass encoding via center of bounding box, width, height after 5 detections OR default values after 3 minutes
+				t = Timer(180, shootError) 
+				t.start()
+				
+				#create three lists of center, width, and height and average the values together
+				horList = []
+				vertList = []
+				widthList = []
+				heightList = []
+				
+				j = 0
+				for j in range(0. 5):
+					horList.append(center[0])
+					vertList.append(center[1])
+					widthList.append(boxDim[0])
+					heightList.append(boxDim[1])
+				
 				writeBack = classDesc + ";" + (str)(center) + ";" + (str)(boxDim[0]) + ";" + (str)(boxDim[1]) + ";"
 				sendBack(writeBack)
+			"""
 			
 			controlsEvent.clear()
 			cameraEvent.set()
 			
 	t2.join()
 	t1.join()
+	
 	
 begin_detecting()
 	
