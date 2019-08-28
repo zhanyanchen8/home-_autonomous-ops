@@ -134,14 +134,29 @@ def readInput():
 """
 
 checks to see if a request has been sent by the Arduino for data
+or to start/stop the events from running
 
 """
 def checkStatus():
 	phrase = readInput()
 	
+	global t1, t
+	t = threading.Timer(200, shootError) 
+	t1 = threading.Thread(target=camera_detection, args=(toFind,))
+	
 	if (phrase.find("request") != -1):
 		print ("request received")
 		sendEvent.set()
+	elif (phrase.find("start") != -1):
+		print ("start request received")
+		t.start()
+		t1.start()
+	elif (phrase.find("finish") != -1):
+		print ("shutdown request received")
+		# join threads here
+		t.cancel()
+		t1.join()
+		sys.exit(0)
 
 """
 
@@ -154,10 +169,16 @@ def sendBack(writeBack):
 	sendEvent.clear()
 	print (writeBack + "\nevent sent")
 	
+"""
 
+stop all threads when desired item is not detected within
+the set time limit
+
+"""
 def shootError():
 	global ser, t1, t2
 	ser.write("NOtime")
+	t.cancel()
 	t1.join()
 	t2.join()
 	sys.exit(999)
@@ -168,7 +189,13 @@ toFind = set()
 t = threading.Timer(200, shootError) 
 t1 = threading.Thread(target=camera_detection, args=(toFind,))
 t2 = threading.Thread(target=checkStatus, args=())
-	
+
+"""
+
+return information in String to return back to Arduino
+for movement purposes (sensor aspect of it)
+
+"""
 def getValues ():
 	global center
 	global boxDim
@@ -231,10 +258,15 @@ def begin_detecting():
 		toFind.add(objects[i:endIndex])
 		i = endIndex + 1
 	
+	global t2
+	t2.start()
+	
+	"""
 	global t1, t2, t
 	t.start()
 	t1.start()
 	t2.start()
+	"""
 	
 	while (not cameraEvent.isSet()):
 		pass
@@ -250,8 +282,7 @@ def begin_detecting():
 				pass
 			
 			if (sendEvent.isSet()):
-				#pass encoding via center of bounding box, width, height after 5 detections OR default values after 3 minutes
-						
+				#pass encoding via center of bounding box, width, height after 5 detections OR default values after 3 minutes		
 				writeBack = getValues()
 				sendBack(writeBack)
 				sendEvent.clear()
@@ -260,8 +291,6 @@ def begin_detecting():
 			cameraEvent.set()
 			
 	t2.join()
-	t1.join()
-	
 	
 begin_detecting()
 	
