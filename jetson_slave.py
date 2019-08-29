@@ -141,23 +141,29 @@ def checkStatus():
 	phrase = readInput()
 	
 	global t1, t
-	t = threading.Timer(200, shootError) 
+	#t = threading.Timer(200, shootError) 
 	t1 = threading.Thread(target=camera_detection, args=(toFind,))
+	
+	print ("checking status")
 	
 	if (phrase.find("request") != -1):
 		print ("request received")
 		sendEvent.set()
 	elif (phrase.find("start") != -1):
 		print ("start request received")
-		t.start()
+		#t.start()
 		t1.start()
 	elif (phrase.find("finish") != -1):
 		print ("shutdown request received")
 		# join threads here
-		t.cancel()
+		#t.cancel()
 		t1.join()
 		sys.exit(0)
 
+def whileCheckStatus():
+	while (not sendEvent.isSet()):
+		checkStatus()
+	
 """
 
 to write data back to the Arduino
@@ -178,17 +184,17 @@ the set time limit
 def shootError():
 	global ser, t1, t2
 	ser.write("NOtime")
-	t.cancel()
+	#t.cancel()
 	t1.join()
 	t2.join()
 	sys.exit(999)
 
-global t, t1, t2
+global t1, t2
 global toFind
 toFind = set()
-t = threading.Timer(200, shootError) 
+#t = threading.Timer(200, shootError) 
 t1 = threading.Thread(target=camera_detection, args=(toFind,))
-t2 = threading.Thread(target=checkStatus, args=())
+t2 = threading.Thread(target=whileCheckStatus, args=())
 
 """
 
@@ -226,7 +232,7 @@ def getValues ():
 			sumWidth = sumWidth + boxDim[0]
 			sumHeight = sumHeight + boxDim[1]
 			
-			t.cancel()
+			#t.cancel()
 		
 	center = (sumHor/5.0, sumVert/5.0)
 	width = sumWidth/5.0
@@ -272,7 +278,7 @@ def begin_detecting():
 		pass
 		
 	while (cameraEvent.isSet()):
-			
+		
 		while (cameraEvent.isSet() and not controlsEvent.isSet()):
 			pass
 		
